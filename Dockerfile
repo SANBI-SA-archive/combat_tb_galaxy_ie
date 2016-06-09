@@ -17,9 +17,15 @@ RUN apt-get -y install software-properties-common \
     # Install pip's dependency: setuptools:
     python python-dev python-distribute python-pip
 
-RUN pip install gunicorn click numpy pandas patsy python-dateutil PyYAML scipy six statsmodels
+# Install miniconda to /miniconda
+RUN curl -LO http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh
+RUN bash Miniconda-latest-Linux-x86_64.sh -p /miniconda -b
+RUN rm Miniconda-latest-Linux-x86_64.sh
+ENV PATH=/miniconda/bin:${PATH}
+RUN conda update -y conda
+RUN conda install -y gunicorn click numpy pandas patsy python-dateutil PyYAML scipy six statsmodels
 
-    # Install Java
+# Install Java
 RUN echo oracle-java7-installer shared/accepted-oracle-license-v1-1 select true | sudo /usr/bin/debconf-set-selections \
     && apt-get -y install oracle-java7-installer \
     oracle-java7-set-default \
@@ -45,7 +51,6 @@ WORKDIR /opt
 #     && unzip JBrowse-1.11.6.zip && rm JBrowse-1.11.6.zip \
 #     && mv JBrowse-1.11.6 jbrowse \
 #     && jbrowse/./setup.sh
-
 
 # Install Neo4j
 ENV NEO4J_VERSION 2.3.3
