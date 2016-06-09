@@ -1,0 +1,80 @@
+FROM ubuntu:14.04
+# FROM continuumio/miniconda
+
+MAINTAINER Thoba Lose 'thoba@sanbi.ac.za'
+
+RUN groupadd -g 1047 galaxy \
+    && useradd -u 1097 galaxy -g galaxy
+
+RUN apt-get -y install software-properties-common \
+    && add-apt-repository ppa:webupd8team/java \
+    && apt-get -y update \
+    && apt-get -y install lsof net-tools supervisor nginx \
+    # For JBrowse
+    build-essential libpng-dev zlib1g-dev libgd2-xpm-dev curl wget unzip git \
+    # ./autogen.sh: 3: ./autogen.sh: autoreconf: not found
+    dh-autoreconf \
+    # Install pip's dependency: setuptools:
+    python python-dev python-distribute python-pip
+
+RUN pip install gunicorn click numpy pandas patsy python-dateutil PyYAML scipy six statsmodels
+
+    # Install Java
+RUN echo oracle-java7-installer shared/accepted-oracle-license-v1-1 select true | sudo /usr/bin/debconf-set-selections \
+    && apt-get -y install oracle-java7-installer \
+    oracle-java7-set-default \
+    && rm -rf /var/lib/apt/lists/* \
+    # Neo4j data and logs directories
+    && mkdir /data /logs
+
+# These environment variables are passed from Galaxy to the container
+# and help you enable connectivity to Galaxy from within the container.
+# This means your user can import/export data from/to Galaxy.
+ENV DEBIAN_FRONTEND=noninteractive \
+    API_KEY=none \
+    DEBUG=false \
+    PROXY_PREFIX=none \
+    GALAXY_URL=none \
+    GALAXY_WEB_PORT=10000 \
+    HISTORY_ID=none \
+    REMOTE_HOST=none
+
+WORKDIR /opt
+# Download and install JBrowse
+# RUN curl -O http://jbrowse.org/releases/JBrowse-1.11.6.zip \
+#     && unzip JBrowse-1.11.6.zip && rm JBrowse-1.11.6.zip \
+#     && mv JBrowse-1.11.6 jbrowse \
+#     && jbrowse/./setup.sh
+
+
+# Install Neo4j
+ENV NEO4J_VERSION 2.3.3
+ENV NEO4J_EDITION community
+ENV NEO4J_DOWNLOAD_SHA256 01559c55055516a42ee2dd100137b6b55d63f02959a3c6c6db7a152e045828d9
+ENV NEO4J_DOWNLOAD_ROOT http://dist.neo4j.org
+ENV NEO4J_TARBALL neo4j-$NEO4J_EDITION-$NEO4J_VERSION-unix.tar.gz
+ENV NEO4J_URI $NEO4J_DOWNLOAD_ROOT/$NEO4J_TARBALL
+ENV NEO4J_AUTH none
+ENV NEO4J_REST_URL http://localhost:7474/db/data/
+
+RUN curl --fail --silent --show-error --location --output neo4j.tar.gz $NEO4J_URI \
+    && echo "$NEO4J_DOWNLOAD_SHA256 neo4j.tar.gz" | sha256sum --check --quiet - \
+    && tar --extract --file neo4j.tar.gz --directory . \
+    && mv neo4j-* neo4j \
+    && rm neo4j.tar.gz
+
+ADD neo4j-server.properties /opt/neo4j/conf/neo4j-server.properties
+
+# VOLUMES
+VOLUME /data
+# Default Galaxy IE Volume
+VOLUME /import
+
+# ADD COMBAT-TB Web Code
+ADD combattb_web /opt/code
+RUN pip install -r /opt/code/requirements.txt
+# RUN chown -R galaxy:galaxy /opt /data
+ADD supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# RUN rm /etc/nginx/sites-enabled/default
+EXPOSE 8000
+CMD ["/usr/bin/supervisord","-c","/etc/supervisor/supervisord.conf"]
