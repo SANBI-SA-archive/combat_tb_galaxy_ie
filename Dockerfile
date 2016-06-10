@@ -60,7 +60,6 @@ ENV NEO4J_DOWNLOAD_ROOT http://dist.neo4j.org
 ENV NEO4J_TARBALL neo4j-$NEO4J_EDITION-$NEO4J_VERSION-unix.tar.gz
 ENV NEO4J_URI $NEO4J_DOWNLOAD_ROOT/$NEO4J_TARBALL
 ENV NEO4J_AUTH none
-ENV NEO4J_REST_URL http://localhost:7474/db/data/
 
 RUN curl --fail --silent --show-error --location --output neo4j.tar.gz $NEO4J_URI \
     && echo "$NEO4J_DOWNLOAD_SHA256 neo4j.tar.gz" | sha256sum --check --quiet - \
@@ -74,12 +73,16 @@ ADD neo4j-server.properties /opt/neo4j/conf/neo4j-server.properties
 VOLUME /data
 # Default Galaxy IE Volume
 VOLUME /import
-
+ENV NEO4J_REST_URL http://localhost:7474/db/data/
 # ADD COMBAT-TB Web Code
 ADD combattb_web /opt/code
 RUN pip install -r /opt/code/requirements.txt
 # RUN chown -R galaxy:galaxy /opt /data
 ADD supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-# RUN rm /etc/nginx/sites-enabled/default
-EXPOSE 8000
+# Nginx setup
+RUN rm /etc/nginx/sites-enabled/default
+ADD nginx.conf /etc/nginx/nginx.conf
+RUN nginx -t
+EXPOSE 80
+# RUN service supervisor restart
 CMD ["/usr/bin/supervisord","-c","/etc/supervisor/supervisord.conf"]
