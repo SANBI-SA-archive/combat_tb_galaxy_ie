@@ -46,11 +46,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
     REMOTE_HOST=none
 
 WORKDIR /opt
-# Download and install JBrowse
-# RUN curl -O http://jbrowse.org/releases/JBrowse-1.11.6.zip \
-#     && unzip JBrowse-1.11.6.zip && rm JBrowse-1.11.6.zip \
-#     && mv JBrowse-1.11.6 jbrowse \
-#     && jbrowse/./setup.sh
 
 # Install Neo4j
 ENV NEO4J_VERSION 2.3.3
@@ -77,6 +72,13 @@ ENV NEO4J_REST_URL http://localhost:7474/db/data/
 # ADD COMBAT-TB Web Code
 ADD combattb_web /opt/code
 RUN pip install -r /opt/code/requirements.txt
+
+# Copy/Mount CTBReport data
+#  dataset_XXXX_files will be mapped to the hda.dataset.id
+ADD dataset_9999_files/jbrowse /data/jbrowse
+ADD dataset_9999_files/neo4jdb /data/neo4jdb
+
+RUN ls /data/
 # RUN chown -R galaxy:galaxy /opt /data
 ADD supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # Nginx setup
