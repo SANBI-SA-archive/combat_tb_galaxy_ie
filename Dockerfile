@@ -5,6 +5,8 @@ MAINTAINER Thoba Lose 'thoba@sanbi.ac.za'
 RUN groupadd -g 1047 galaxy \
     && useradd -u 1097 galaxy -g galaxy
 
+RUN apt-get update
+
 RUN apt-get -y install software-properties-common \
     && add-apt-repository ppa:webupd8team/java \
     && apt-get -y update \
