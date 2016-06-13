@@ -5,6 +5,8 @@ MAINTAINER Thoba Lose 'thoba@sanbi.ac.za'
 RUN groupadd -g 1047 galaxy \
     && useradd -u 1097 galaxy -g galaxy
 
+RUN apt-get update
+
 RUN apt-get -y install software-properties-common \
     && add-apt-repository ppa:webupd8team/java \
     && apt-get -y update \
@@ -66,7 +68,8 @@ VOLUME /data
 VOLUME /import
 
 # ADD COMBAT-TB Web Code
-ADD combattb_web /opt/code
+RUN wget https://bitbucket.org/sanbidev/combattb_web/get/v0.0.1.tar.gz && mkdir code && tar -C code --strip-components=1 -xf v0.0.1.tar.gz
+#ADD combattb_web /opt/code
 RUN pip install -r /opt/code/requirements.txt
 
 # Copy/Mount CTBReport data *For testing
