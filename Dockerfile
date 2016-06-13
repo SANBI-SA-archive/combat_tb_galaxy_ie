@@ -68,7 +68,8 @@ VOLUME /data
 VOLUME /import
 
 # ADD COMBAT-TB Web Code
-ADD combattb_web /opt/code
+RUN wget https://bitbucket.org/sanbidev/combattb_web/get/v0.0.1.tar.gz && mkdir code && tar -C code --strip-components=1 -xf v0.0.1.tar.gz
+#ADD combattb_web /opt/code
 RUN pip install -r /opt/code/requirements.txt
 
 # Copy/Mount CTBReport data *For testing
