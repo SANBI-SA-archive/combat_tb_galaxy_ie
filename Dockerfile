@@ -1,5 +1,4 @@
 FROM ubuntu:14.04
-# FROM continuumio/miniconda
 
 MAINTAINER Thoba Lose 'thoba@sanbi.ac.za'
 
@@ -9,11 +8,7 @@ RUN groupadd -g 1047 galaxy \
 RUN apt-get -y install software-properties-common \
     && add-apt-repository ppa:webupd8team/java \
     && apt-get -y update \
-    && apt-get -y install lsof net-tools supervisor nginx \
-    # For JBrowse
-    build-essential libpng-dev zlib1g-dev libgd2-xpm-dev curl wget unzip git \
-    # ./autogen.sh: 3: ./autogen.sh: autoreconf: not found
-    dh-autoreconf \
+    && apt-get -y install lsof net-tools supervisor nginx curl \
     # Install pip's dependency: setuptools:
     python python-dev python-distribute python-pip
 
@@ -55,6 +50,7 @@ ENV NEO4J_DOWNLOAD_ROOT http://dist.neo4j.org
 ENV NEO4J_TARBALL neo4j-$NEO4J_EDITION-$NEO4J_VERSION-unix.tar.gz
 ENV NEO4J_URI $NEO4J_DOWNLOAD_ROOT/$NEO4J_TARBALL
 ENV NEO4J_AUTH none
+ENV NEO4J_REST_URL http://localhost:7474/db/data/
 
 RUN curl --fail --silent --show-error --location --output neo4j.tar.gz $NEO4J_URI \
     && echo "$NEO4J_DOWNLOAD_SHA256 neo4j.tar.gz" | sha256sum --check --quiet - \
@@ -68,17 +64,15 @@ ADD neo4j-server.properties /opt/neo4j/conf/neo4j-server.properties
 VOLUME /data
 # Default Galaxy IE Volume
 VOLUME /import
-ENV NEO4J_REST_URL http://localhost:7474/db/data/
+
 # ADD COMBAT-TB Web Code
 ADD combattb_web /opt/code
 RUN pip install -r /opt/code/requirements.txt
 
-# Copy/Mount CTBReport data
-#  dataset_XXXX_files will be mapped to the hda.dataset.id
-ADD dataset_9999_files/jbrowse /data/jbrowse
-ADD dataset_9999_files/neo4jdb /data/neo4jdb
+# Copy/Mount CTBReport data *For testing
+# ADD dataset_9999_files/jbrowse /data/jbrowse
+# ADD dataset_9999_files/neo4jdb /data/neo4jdb
 
-RUN ls /data/
 # RUN chown -R galaxy:galaxy /opt /data
 ADD supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # Nginx setup
