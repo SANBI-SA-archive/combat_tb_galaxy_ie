@@ -68,7 +68,7 @@ VOLUME /data
 VOLUME /import
 
 # ADD COMBAT-TB Web Code
-RUN wget https://bitbucket.org/sanbidev/combattb_web/get/v0.0.2.tar.gz && mkdir code && tar -C code --strip-components=1 -xf v0.0.2.tar.gz
+RUN wget https://bitbucket.org/sanbidev/combattb_web/get/v0.0.3.tar.gz && mkdir code && tar -C code --strip-components=1 -xf v0.0.3.tar.gz
 #ADD combattb_web /opt/code
 RUN pip install -r /opt/code/requirements.txt
 
